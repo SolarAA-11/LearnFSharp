@@ -4,39 +4,57 @@ open Elmish
 open Elmish.React
 open Feliz
 
-type State =
-    { Count: int }
+open System
 
-type Msg =
-    | Increment
-    | Decrement
+// convert Async<'msg> to Cmd<'msg>
+module Cmd = 
+  let fromAsync operation = 
+    let asyncCommand dispatch = 
+      let asyncDispatch = async {
+        let! resultMessage = operation
+        dispatch resultMessage
+      }
+      Async.StartImmediate asyncDispatch
+    Cmd.ofSub asyncCommand
 
-let init() =
-    { Count = 0 }
+type State = 
+  { CurrentTime: DateTime }
 
-let update (msg: Msg) (state: State): State =
-    match msg with
-    | Increment ->
-        { state with Count = state.Count + 1 }
+type Msg = 
+  | Tick
 
-    | Decrement ->
-        { state with Count = state.Count - 1 }
+let update msg state = 
+  match msg with
+  | Tick ->
+    let nextState = 
+      {state with CurrentTime = DateTime.Now}
+    let step = async {
+      do! Async.Sleep 1000
+      return Tick
+    }
+    nextState, Cmd.fromAsync step
 
-let render (state: State) (dispatch: Msg -> unit) =
+let init() = 
+  { CurrentTime = DateTime.Now }, Cmd.ofMsg Tick
+
+// formate Datetime as hour:minute:second
+let formatTime (time: DateTime) = 
+  time.ToString("HH:mm:ss")
+
+// render simple timer
+let render state dispatch = 
   Html.div [
-    Html.button [
-      prop.onClick (fun _ -> dispatch Increment)
-      prop.text "Increment"
+    // padding 20
+    prop.style [
+      style.padding 20
     ]
-
-    Html.button [
-      prop.onClick (fun _ -> dispatch Decrement)
-      prop.text "Decrement"
+    // render current time in h1
+    prop.children [
+      Html.h1 (formatTime state.CurrentTime)
     ]
-
-    Html.h1 state.Count
   ]
 
-Program.mkSimple init update render
+// start program react node's ID is elmish-app
+Program.mkProgram init update render
 |> Program.withReactSynchronous "elmish-app"
 |> Program.run
