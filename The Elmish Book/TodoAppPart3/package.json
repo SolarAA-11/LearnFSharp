@@ -12,7 +12,6 @@
     "@babel/core": "^7.16.0",
     "fable-compiler": "^2.13.0",
     "fable-loader": "^2.1.9",
-    "tailwindcss": "^3.2.4",
     "webpack": "^5.64.2",
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^4.5.0"
